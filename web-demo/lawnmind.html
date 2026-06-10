@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>🌿 LawnMind</title>
+<style>
+  :root {
+    --bg: #F6F5EF; --surface: #FFFFFF; --muted: #EEF0E4; --border: #DDE0CE;
+    --primary: #2E7D32; --primary-dark: #1B5E20; --accent: #8D6E63;
+    --text: #22301F; --text2: #5C6B53; --urgent: #C62828;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 15px; line-height: 1.45;
+  }
+  #app { max-width: 720px; margin: 0 auto; padding: 16px 16px 96px; }
+  h1 { font-size: 26px; margin-bottom: 4px; }
+  h2 { font-size: 17px; margin: 18px 0 8px; }
+  .muted { color: var(--text2); }
+  .small { font-size: 12px; }
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+    padding: 16px; margin-bottom: 12px;
+  }
+  .card.tinted { background: var(--muted); }
+  button {
+    font: inherit; border: none; cursor: pointer; border-radius: 12px;
+    padding: 12px 16px; font-weight: 600; width: 100%;
+  }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-secondary { background: var(--muted); color: var(--primary-dark); }
+  .btn-ghost { background: transparent; color: var(--primary-dark); }
+  button:disabled { opacity: .45; }
+  input[type=text], textarea {
+    font: inherit; width: 100%; border: 1px solid var(--border); border-radius: 12px;
+    padding: 12px; background: var(--surface); color: var(--text); font-size: 17px;
+  }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 14px; }
+  .chip {
+    border: 1px solid var(--border); background: var(--surface); border-radius: 999px;
+    padding: 8px 13px; font-size: 14px; width: auto; font-weight: 400;
+  }
+  .chip.sel { background: var(--primary); border-color: var(--primary); color: #fff; font-weight: 600; }
+  .badge { border-radius: 999px; color: #fff; font-size: 12px; font-weight: 700; padding: 3px 10px; }
+  .row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .task-title { font-size: 18px; font-weight: 700; margin: 8px 0 4px; }
+  .link { color: var(--primary-dark); font-weight: 600; font-size: 14px; background: none; border: none; padding: 6px 0; width: auto; }
+  .product {
+    display: flex; justify-content: space-between; align-items: center; gap: 8px;
+    background: var(--muted); border-radius: 12px; padding: 12px; margin-top: 10px;
+    text-decoration: none; color: var(--text); font-size: 14px;
+  }
+  .product em { color: var(--text2); font-size: 11px; }
+  .done { color: var(--primary-dark); font-weight: 700; margin-top: 10px; }
+  .completed { opacity: .7; }
+  .completed .task-title { text-decoration: line-through; }
+  .gauge-track { height: 10px; border-radius: 8px; background: var(--muted); overflow: hidden; margin-top: 6px; }
+  .gauge-fill { height: 100%; background: var(--primary); border-radius: 8px; transition: width .4s; }
+  .wx { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; }
+  .wx-day {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 8px 12px; text-align: center; min-width: 64px; flex-shrink: 0;
+  }
+  .wx-day b { font-size: 17px; display: block; }
+  .askbar {
+    border: 1.5px solid var(--primary); border-radius: 999px; background: var(--surface);
+    padding: 14px; color: var(--text2); text-align: left; font-weight: 400; margin-top: 16px;
+  }
+  /* chat */
+  .bubble { border-radius: 16px; padding: 12px; margin-bottom: 8px; max-width: 85%; white-space: pre-wrap; }
+  .bubble.user { background: var(--primary); color: #fff; margin-left: auto; }
+  .bubble.bot { background: var(--surface); border: 1px solid var(--border); }
+  .chat-input { display: flex; gap: 8px; margin-top: 12px; }
+  .chat-input textarea { flex: 1; resize: none; height: 48px; }
+  .send { width: 48px; height: 48px; border-radius: 999px; background: var(--primary); color: #fff; font-size: 20px; flex-shrink: 0; }
+  /* tabs */
+  #tabs {
+    position: fixed; bottom: 0; left: 0; right: 0; display: flex;
+    background: var(--surface); border-top: 1px solid var(--border);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  #tabs button {
+    flex: 1; background: none; border-radius: 0; padding: 10px 0 8px;
+    font-size: 11px; color: var(--text2); font-weight: 600;
+  }
+  #tabs button span { display: block; font-size: 20px; margin-bottom: 2px; }
+  #tabs button.active { color: var(--primary-dark); }
+  .kv { display: flex; justify-content: space-between; padding: 6px 0; font-size: 14px; gap: 16px; }
+  .kv b { text-align: right; }
+  .note { color: var(--accent); font-size: 12px; margin-top: 6px; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<nav id="tabs" hidden>
+  <button data-tab="home"><span>🌿</span>Home</button>
+  <button data-tab="lawn"><span>🏡</span>My Lawn</button>
+  <button data-tab="ask"><span>💬</span>Ask</button>
+  <button data-tab="explore"><span>🧭</span>Explore</button>
+  <button data-tab="settings"><span>⚙️</span>Settings</button>
+</nav>
+
+<script>
+"use strict";
+/* ============================================================
+   LawnMind — single-file demo build.
+   Port of app/src/lib/local-engine.ts + the Expo screens, kept
+   in sync by hand. Real weather via Open-Meteo when online.
+   ============================================================ */
+
+// ---------- regional data (PRD Appendix A) ----------
+const RULES = [
+  { id:"pre-emergent-cool", title:"Apply pre-emergent herbicide", category:"weed_control",
+    zones:["cool","transition"], win:[8,18], minSoil:50, maxSoil:58, mins:45, base:90,
+    why:"Soil temps are in the 50–55°F window — crabgrass germinates right after this, so the barrier needs to go down now.",
+    deep:"Apply when soil temps hold 50–55°F for 3 consecutive days. Water in with ~0.25 inch unless rain is forecast within 48 hours. Plan a second application 6–8 weeks later. Skip pre-emergent anywhere you plan to seed this spring.",
+    productCat:"pre_emergent" },
+  { id:"pre-emergent-warm", title:"Apply pre-emergent herbicide", category:"weed_control",
+    zones:["warm"], win:[4,13], mins:45, base:88,
+    why:"Late winter is the pre-emergent window in warm-season zones — beating weed germination is the whole game.",
+    deep:"Apply late January through March. Bermuda and Zoysia lawns often benefit from a split August application targeting winter annual weeds. Water in after application.",
+    productCat:"pre_emergent" },
+  { id:"spring-fertilizer", title:"Apply slow-release spring fertilizer", category:"fertilization",
+    zones:["cool","transition","warm"], win:[10,24], minSoil:55, mins:30, base:80,
+    why:"Soil temps passed 55°F and the lawn is actively growing — a slow-release nitrogen feed now builds density before summer stress.",
+    deep:"Use a slow-release nitrogen formula. Cool-season lawns: feed once green-up is underway. Warm-season lawns: wait until fully out of dormancy (soil > 65°F). Apply at the bag's labeled rate — more is not better.",
+    productCat:"fertilizer" },
+  { id:"mow-weekly", title:"Mow at the right height", category:"mowing",
+    zones:["cool","transition","warm"], win:[10,45], mins:40, base:55,
+    why:"Growth is active this week — never remove more than a third of the blade in one cut.",
+    deep:"Cool-season grasses: keep 3–4 inches. Bermuda: 1–2 inches. Zoysia: 1.5–2.5 inches. Sharp blades cut clean; dull blades tear and brown the tips. Leave clippings — they return nitrogen." },
+  { id:"water-deep", title:"Water deeply and infrequently", category:"watering",
+    zones:["cool","transition","warm"], win:[1,52], mins:15, base:50,
+    why:"Hot, dry stretch ahead with little rain in the forecast — one deep soak beats daily sprinkles for root depth.",
+    deep:"Target ~1 inch per week including rainfall, in 1–2 deep sessions. Water before 10 AM to limit evaporation and fungus. Increase frequency when soil temps exceed 80°F." },
+  { id:"overseed-fall-cool", title:"Overseed thin areas", category:"seeding",
+    zones:["cool","transition"], win:[34,42], mins:90, base:85,
+    why:"Late summer through early fall is the best seeding window of the year — warm soil, cooling air, and weeds winding down.",
+    deep:"Mow short, rake out debris, spread seed at the labeled overseeding rate, and keep the top half-inch of soil consistently moist for 2–3 weeks.",
+    productCat:"seed" },
+  { id:"aeration-fall-cool", title:"Core aerate compacted areas", category:"aeration",
+    zones:["cool","transition"], win:[36,42], mins:60, base:70,
+    why:"Fall aeration relieves a season of compaction while cool-season roots are in their strongest growth phase.",
+    deep:"Use a core aerator (not spikes) when soil is moist but not saturated. Leave the plugs to break down. Pairs perfectly with overseeding.",
+    productCat:"aeration" },
+  { id:"aeration-warm", title:"Core aerate compacted areas", category:"aeration",
+    zones:["warm"], win:[20,26], mins:60, base:68,
+    why:"Late spring is the aeration window for warm-season grass — it's growing fast enough to recover quickly.",
+    deep:"Aerate Bermuda/Zoysia in May–June while actively growing. Avoid fall aeration in warm-season zones — recovery growth is insufficient before dormancy.",
+    productCat:"aeration" },
+  { id:"grub-prevention", title:"Apply preventive grub control", category:"pest_control",
+    zones:["cool","transition","warm"], win:[21,28], mins:30, base:65,
+    why:"Grub eggs hatch mid-summer — preventive control applied now stops root damage before it starts.",
+    deep:"Apply a preventive product (imidacloprid or chlorantraniliprole) late May–July, before peak egg hatch. Water in with ~0.5 inch. Always follow label rates exactly.",
+    productCat:"grub_control" },
+];
+
+const GOAL_BOOST = {
+  keep_green: { fertilization:15, watering:10, mowing:5 },
+  fix_regrow: { seeding:20, aeration:15, fertilization:10 },
+  stop_weeds: { weed_control:25, mowing:5 },
+  low_maintenance: { watering:10, mowing:10 },
+};
+const CONDITION_SCORE = { beautiful:9, pretty_good:7, needs_work:5, total_mess:3 };
+
+const CATALOG = [
+  { id:"pre-emergent-halts", name:"Crabgrass Pre-Emergent (Scotts Halts)", cat:"pre_emergent", partner:"Amazon", url:"https://www.amazon.com/dp/B003E243PA" },
+  { id:"fert-slow-release", name:"Slow-Release Lawn Fertilizer 30-0-4", cat:"fertilizer", partner:"Home Depot", url:"https://www.homedepot.com/b/Outdoors-Garden-Center-Lawn-Care-Lawn-Fertilizers/N-5yc1vZc8rb" },
+  { id:"seed-tall-fescue", name:"Tall Fescue Overseeding Mix", cat:"seed", partner:"Amazon", url:"https://www.amazon.com/dp/B01EZBQ4D2" },
+  { id:"aerator-core", name:"Manual Core Aerator", cat:"aeration", partner:"True Value", url:"https://www.truevalue.com/lawn-garden" },
+  { id:"grub-preventer", name:"Season-Long Grub Preventer", cat:"grub_control", partner:"Amazon", url:"https://www.amazon.com/dp/B00AQ3MWEU" },
+];
+
+const ZIP3 = { "100":[40.71,-74.01],"021":[42.36,-71.06],"191":[39.95,-75.17],"202":[38.9,-77.04],
+  "303":[33.75,-84.39],"331":[25.77,-80.19],"372":[36.16,-86.78],"606":[41.88,-87.63],
+  "441":[41.5,-81.69],"482":[42.33,-83.05],"495":[42.96,-85.67],"551":[44.95,-93.09],
+  "631":[38.63,-90.2],"640":[39.1,-94.58],"752":[32.78,-96.8],"770":[29.76,-95.37],
+  "787":[30.27,-97.74],"802":[39.74,-104.99],"850":[33.45,-112.07],"871":[35.08,-106.65],
+  "900":[34.05,-118.24],"941":[37.77,-122.42],"971":[45.52,-122.68],"981":[47.61,-122.33] };
+const ZIP1 = { "0":[42.5,-72],"1":[41.5,-75],"2":[37.5,-78],"3":[32.5,-84],"4":[40,-84],
+  "5":[44.5,-93],"6":[38.5,-92],"7":[32.5,-96.5],"8":[39.5,-105.5],"9":[37.5,-120] };
+
+function coordsForZip(zip) {
+  const m3 = ZIP3[zip.slice(0,3)]; if (m3) return { lat:m3[0], lng:m3[1] };
+  const m1 = ZIP1[zip[0]] || [39.8,-98.6]; return { lat:m1[0], lng:m1[1] };
+}
+function zoneGroup(lat) { return lat >= 40 ? "cool" : lat >= 35 ? "transition" : "warm"; }
+function zoneLabel(lat) { return lat >= 40 ? "Cool-season zone" : lat >= 35 ? "Transition zone" : "Warm-season zone"; }
+function grassOptions(lat) {
+  if (lat >= 40) return ["Kentucky Bluegrass","Tall Fescue","Perennial Ryegrass","Fine Fescue","Not sure"];
+  if (lat >= 35) return ["Tall Fescue","Zoysia","Kentucky Bluegrass","Bermuda","Not sure"];
+  return ["Bermuda","Zoysia","St. Augustine","Centipede","Bahia","Not sure"];
+}
+
+// ---------- weather (live Open-Meteo, seasonal fallback) ----------
+const cToF = c => Math.round(c * 9 / 5 + 32);
+
+function seasonalForecast(lat, now = new Date()) {
+  const seasonal = [35,38,48,58,68,78,84,82,74,62,50,40][now.getMonth()] ?? 60;
+  const high = Math.round(seasonal + (40 - lat) * 0.8);
+  const days = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(now); d.setDate(d.getDate() + i);
+    days.push({ date: d.toISOString().slice(0,10), hi: high, lo: high - 18, pop: 20, rain: 0.05, soil: high - 12 });
+  }
+  return { source: "fallback", days };
+}
+
+async function getForecast(lat, lng) {
+  try {
+    const u = new URL("https://api.open-meteo.com/v1/forecast");
+    u.searchParams.set("latitude", lat); u.searchParams.set("longitude", lng);
+    u.searchParams.set("daily", "temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max");
+    u.searchParams.set("hourly", "soil_temperature_6cm");
+    u.searchParams.set("forecast_days", "7"); u.searchParams.set("timezone", "auto");
+    const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 6000);
+    const res = await fetch(u, { signal: ctrl.signal }); clearTimeout(t);
+    if (!res.ok) throw new Error("upstream " + res.status);
+    const b = await res.json();
+    const soilByDate = {};
+    (b.hourly?.time || []).forEach((tm, i) => {
+      const v = b.hourly.soil_temperature_6cm[i]; if (v == null) return;
+      const date = tm.slice(0,10); (soilByDate[date] ||= []).push(v);
+    });
+    const days = b.daily.time.map((date, i) => {
+      const soil = soilByDate[date];
+      const soilC = soil && soil.length ? soil.reduce((a,c)=>a+c,0)/soil.length : 13;
+      return {
+        date, hi: cToF(b.daily.temperature_2m_max[i] ?? 20), lo: cToF(b.daily.temperature_2m_min[i] ?? 10),
+        pop: b.daily.precipitation_probability_max[i] ?? 0,
+        rain: Math.round(((b.daily.precipitation_sum[i] ?? 0) / 25.4) * 100) / 100,
+        soil: cToF(soilC),
+      };
+    });
+    return { source: "open-meteo", days };
+  } catch (e) {
+    return seasonalForecast(lat);
+  }
+}
+
+// ---------- PlanGen v1 ----------
+function isoWeek(date) {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const ys = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil(((d - ys) / 864e5 + 1) / 7);
+}
+const inWin = (w, [s, e]) => s <= e ? (w >= s && w <= e) : (w >= s || w <= e);
+
+function generatePlan(profile, wx, now = new Date()) {
+  const week = isoWeek(now), zone = zoneGroup(profile.lat);
+  const avgSoil = wx.days.reduce((s,d)=>s+d.soil,0) / wx.days.length;
+  const avgHigh = wx.days.reduce((s,d)=>s+d.hi,0) / wx.days.length;
+  const totalRain = wx.days.reduce((s,d)=>s+d.rain,0);
+  const boosts = GOAL_BOOST[profile.goal] || {};
+
+  const scored = RULES
+    .filter(r => r.zones.includes(zone) && inWin(week, r.win))
+    .filter(r => r.minSoil === undefined || avgSoil >= r.minSoil)
+    .map(r => {
+      let s = r.base;
+      if (r.maxSoil !== undefined && avgSoil > r.maxSoil) s -= 25;
+      if (r.category === "watering") {
+        if (totalRain >= 0.75) s -= 50;
+        if (avgHigh >= 85 && totalRain < 0.25) s += 30;
+      }
+      if (r.category === "seeding" && avgHigh >= 90) s -= 30;
+      s += boosts[r.category] || 0;
+      if ((profile.condition === "needs_work" || profile.condition === "total_mess") &&
+          ["seeding","aeration","weed_control"].includes(r.category)) s += 10;
+      return { r, s };
+    })
+    .filter(x => x.s >= 40)
+    .sort((a,b) => b.s - a.s)
+    .slice(0, 4);
+
+  const start = new Date(now); start.setDate(start.getDate() - ((start.getDay() + 6) % 7));
+  const banner = avgHigh >= 85 && totalRain < 0.75 ? "Hot and dry this week — watering is the priority."
+    : avgHigh >= 70 && totalRain < 0.75 ? "Warm and dry this week — a good window for treatments."
+    : totalRain >= 0.75 ? "Rain on the way — let nature handle the watering and time granular products before it."
+    : avgHigh <= 40 ? "Cold week ahead — the lawn is resting, and so can you."
+    : "Mild week ahead — steady growing conditions.";
+
+  return {
+    weekLabel: "Week of " + start.toLocaleDateString("en-US", { month:"long", day:"numeric" }),
+    banner,
+    healthScore: CONDITION_SCORE[profile.condition] ?? 5,
+    wx,
+    tasks: scored.map(({ r, s }, idx) => ({
+      id: r.id + "-w" + week,
+      title: r.title,
+      priority: s >= 90 ? "urgent" : idx < 2 ? "this_week" : "optional",
+      mins: r.mins, why: r.why, deep: r.deep,
+      product: r.productCat ? CATALOG.find(p => p.cat === r.productCat) : null,
+    })),
+  };
+}
+
+// ---------- demo chat ----------
+const DEMO_NOTE = "\n\n(Demo answer — the full app connects to Claude for live, lawn-specific advice.)";
+function chatAnswer(msg, profile, plan) {
+  const q = msg.toLowerCase();
+  const grass = profile ? profile.grass : "your grass";
+  if (/water/.test(q)) return "For " + grass + ", aim for about 1 inch of water per week including rain, in one or two deep sessions rather than daily sprinkles — deep watering builds deep roots. Water before 10 AM to limit evaporation and fungus." + DEMO_NOTE;
+  if (/yellow|brown|patch|spot/.test(q)) return "Yellow or brown patches near driveways and walkways are most often heat reflection, dog spots, or grub damage. Tug a patch: if it lifts like carpet, suspect grubs; if it's firm, it's likely drought or salt stress. Water deeply and re-check in a week." + DEMO_NOTE;
+  if (/fertili[sz]/.test(q)) return "Use a slow-release nitrogen fertilizer once soil temps hold above 55°F. Apply at the labeled rate — over-applying invites disease and burn." + DEMO_NOTE;
+  if (/overseed|seed/.test(q)) return "For cool-season lawns the best overseeding window is late August through October — warm soil, cool air, less weed competition. Spring seeding works but fails more often. Skip pre-emergent anywhere you seed." + DEMO_NOTE;
+  if (/aerat/.test(q)) return "Aerate when soil is moist but not saturated — typically a day or two after rain, not right before it. Cool-season lawns: fall. Warm-season: late spring." + DEMO_NOTE;
+  if (/mow/.test(q)) return "Never remove more than a third of the blade in one cut. Cool-season grasses: keep 3–4 inches. Bermuda: 1–2 inches. Sharp blades cut clean — dull blades tear and brown the tips." + DEMO_NOTE;
+  const top = plan && plan.tasks[0];
+  if (top) return "Good question. The most impactful thing for your lawn this week is: " + top.title.toLowerCase() + " — " + top.why + DEMO_NOTE;
+  return "I can help with watering, fertilizing, weeds, seeding, aeration, and diagnosis — ask away." + DEMO_NOTE;
+}
+
+// ---------- state ----------
+const store = {
+  get(k, fb) { try { const v = localStorage.getItem("lawnmind:" + k); return v ? JSON.parse(v) : fb; } catch { return fb; } },
+  set(k, v) { try { localStorage.setItem("lawnmind:" + k, JSON.stringify(v)); } catch {} },
+};
+let state = {
+  profile: store.get("profile", null),
+  plan: null,
+  done: store.get("done", []),
+  history: store.get("history", []),
+  chat: store.get("chat", []),
+  tab: "home",
+  ob: { step: 1, zip: "", size: null, condition: null, goal: null, grass: null },
+  expanded: {},
+};
+
+const $ = sel => document.querySelector(sel);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+
+// ---------- screens ----------
+const SIZES = [["small","Small (<2,000 sq ft)"],["medium","Medium (2k–8k sq ft)"],["large","Large (8k+ sq ft)"]];
+const CONDITIONS = [["beautiful","Beautiful"],["pretty_good","Pretty good"],["needs_work","Needs work"],["total_mess","Total mess"]];
+const GOALS = [["keep_green","Keep it green"],["fix_regrow","Fix and regrow"],["stop_weeds","Stop weeds"],["low_maintenance","Low-maintenance"]];
+const LABEL = Object.fromEntries([...SIZES, ...CONDITIONS, ...GOALS]);
+
+function chipRow(items, sel, attr) {
+  return '<div class="chips">' + items.map(([v, l]) =>
+    `<button class="chip ${sel === v ? "sel" : ""}" data-${attr}="${v}">${l}</button>`).join("") + "</div>";
+}
+
+function renderOnboarding() {
+  const ob = state.ob;
+  const coords = /^\d{5}$/.test(ob.zip) ? coordsForZip(ob.zip) : null;
+  let inner = "";
+  if (ob.step === 1) {
+    inner = `<div class="card"><h2 style="margin-top:0">Where's your lawn?</h2>
+      <p class="muted">We use your ZIP to detect your climate zone and local weather.</p>
+      <p style="margin:10px 0"><input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="5" id="zip" placeholder="ZIP code" value="${esc(ob.zip)}"></p>
+      ${coords ? `<div class="card tinted" style="margin-bottom:10px"><b style="color:var(--primary-dark)">Detected: ${zoneLabel(coords.lat)} ✓</b></div>` : ""}
+      <button class="btn-primary" id="next" ${coords ? "" : "disabled"}>Next</button></div>`;
+  } else if (ob.step === 2) {
+    inner = `<div class="card"><h2 style="margin-top:0">Quick lawn snapshot</h2>
+      <p class="muted">Approximate size</p>${chipRow(SIZES, ob.size, "size")}
+      <p class="muted">Current condition</p>${chipRow(CONDITIONS, ob.condition, "condition")}
+      <p class="muted">Primary goal</p>${chipRow(GOALS, ob.goal, "goal")}
+      <button class="btn-primary" id="next" ${ob.size && ob.condition && ob.goal ? "" : "disabled"}>Next</button></div>`;
+  } else if (ob.step === 3) {
+    const opts = grassOptions(coords.lat).map(g => [g, g]);
+    inner = `<div class="card"><h2 style="margin-top:0">What grass do you have?</h2>
+      <p class="muted">Common types for your zone — pick "Not sure" and we'll infer it.</p>
+      ${chipRow(opts, ob.grass, "grass")}
+      <button class="btn-primary" id="next" ${ob.grass ? "" : "disabled"}>Next</button></div>`;
+  } else {
+    inner = `<div class="card"><h2 style="margin-top:0">Ready for your first plan</h2>
+      <p class="muted">We'll combine your ${zoneLabel(coords.lat).toLowerCase()}, this week's forecast, and your goal to build Week 1.</p>
+      <p style="margin:10px 0"></p>
+      <button class="btn-primary" id="finish">Generate my first plan 🎉</button></div>`;
+  }
+  $("#app").innerHTML = `<h1>🌿 LawnMind</h1>
+    <p class="muted" style="margin-bottom:14px">Step ${ob.step} of 4 — under 90 seconds, promise.</p>
+    ${inner}
+    ${ob.step > 1 ? '<button class="btn-ghost" id="back">Back</button>' : ""}`;
+
+  const zip = $("#zip");
+  if (zip) zip.oninput = () => { ob.zip = zip.value.replace(/\D/g, "").slice(0, 5); render(); setTimeout(() => { const z = $("#zip"); z.focus(); z.setSelectionRange(99,99); }); };
+  document.querySelectorAll("[data-size]").forEach(b => b.onclick = () => { ob.size = b.dataset.size; render(); });
+  document.querySelectorAll("[data-condition]").forEach(b => b.onclick = () => { ob.condition = b.dataset.condition; render(); });
+  document.querySelectorAll("[data-goal]").forEach(b => b.onclick = () => { ob.goal = b.dataset.goal; render(); });
+  document.querySelectorAll("[data-grass]").forEach(b => b.onclick = () => { ob.grass = b.dataset.grass; render(); });
+  if ($("#next")) $("#next").onclick = () => { ob.step++; render(); };
+  if ($("#back")) $("#back").onclick = () => { ob.step--; render(); };
+  if ($("#finish")) $("#finish").onclick = async () => {
+    $("#finish").disabled = true; $("#finish").textContent = "Building your plan…";
+    const c = coordsForZip(ob.zip);
+    state.profile = { zip: ob.zip, lat: c.lat, lng: c.lng, size: ob.size, condition: ob.condition, goal: ob.goal,
+      grass: ob.grass === "Not sure" ? "Unknown (agent will infer)" : ob.grass };
+    store.set("profile", state.profile);
+    await refreshPlan();
+    state.tab = "home"; render();
+  };
+}
+
+async function refreshPlan() {
+  const p = state.profile;
+  const wx = await getForecast(p.lat, p.lng);
+  state.plan = generatePlan(p, wx);
+}
+
+const PRIO = { urgent:["Urgent","var(--urgent)"], this_week:["This week","var(--primary)"], optional:["Optional","var(--accent)"] };
+
+function renderHome() {
+  const plan = state.plan;
+  if (!plan) {
+    $("#app").innerHTML = `<h1>🌿 LawnMind</h1><div class="card"><p class="muted">Generating your weekly plan…</p></div>`;
+    refreshPlan().then(render);
+    return;
+  }
+  const doneCount = plan.tasks.filter(t => state.done.includes(t.id)).length;
+  const score = Math.min(10, plan.healthScore + doneCount);
+  $("#app").innerHTML = `
+    <h1>${plan.weekLabel}</h1>
+    <div class="card tinted" style="margin-top:10px">${plan.banner}
+      ${plan.wx.source === "fallback" ? '<div class="note">Weather data unavailable — showing seasonal estimates.</div>' : ""}</div>
+    <div class="row"><span class="muted" style="font-weight:600;font-size:14px">Lawn health</span>
+      <b>${score}/10 <span style="color:var(--primary)">${doneCount > 0 ? "▲" : "▶"}</span></b></div>
+    <div class="gauge-track"><div class="gauge-fill" style="width:${score * 10}%"></div></div>
+    <h2>This week's tasks (${doneCount}/${plan.tasks.length} done)</h2>
+    ${plan.tasks.map(t => {
+      const done = state.done.includes(t.id);
+      const [pl, pc] = PRIO[t.priority];
+      return `<div class="card ${done ? "completed" : ""}">
+        <div class="row"><span class="badge" style="background:${pc}">${pl}</span><span class="muted small">~${t.mins} min</span></div>
+        <div class="task-title">${t.title}</div>
+        <p class="muted">${t.why}</p>
+        <button class="link" data-expand="${t.id}">${state.expanded[t.id] ? "Hide details" : "Why & how"}</button>
+        ${state.expanded[t.id] ? `<p>${t.deep}</p>` : ""}
+        ${t.product ? `<a class="product" href="${t.product.url}" target="_blank" rel="noopener">🛒 ${t.product.name}<em>affiliate link</em></a>` : ""}
+        ${done ? '<div class="done">✓ Done — nice work</div>'
+               : `<button class="btn-primary" style="margin-top:12px" data-complete="${t.id}" data-title="${esc(t.title)}">Mark complete</button>`}
+      </div>`;
+    }).join("")}
+    <h2>7-day outlook</h2>
+    <div class="wx">${plan.wx.days.map(d => {
+      const day = new Date(d.date + "T12:00:00").toLocaleDateString("en-US", { weekday: "short" });
+      return `<div class="wx-day"><span class="muted small" style="font-weight:600">${day}</span><b>${d.hi}°</b><span class="muted small">${d.lo}°</span><div class="small muted">${d.pop > 30 ? "💧" + d.pop + "%" : "&nbsp;"}</div></div>`;
+    }).join("")}</div>
+    ${plan.wx.source === "open-meteo" ? '<p class="small muted" style="margin-top:6px">Live forecast via Open-Meteo · soil temp ≈ ' + Math.round(plan.wx.days[0].soil) + "°F</p>" : ""}
+    <button class="askbar" id="goAsk">Ask anything about your lawn…</button>`;
+
+  document.querySelectorAll("[data-expand]").forEach(b => b.onclick = () => {
+    state.expanded[b.dataset.expand] = !state.expanded[b.dataset.expand]; render();
+  });
+  document.querySelectorAll("[data-complete]").forEach(b => b.onclick = () => {
+    const id = b.dataset.complete;
+    if (!state.done.includes(id)) {
+      state.done.push(id); store.set("done", state.done);
+      state.history.unshift({ title: b.dataset.title, at: new Date().toISOString() });
+      store.set("history", state.history.slice(0, 200));
+    }
+    render();
+  });
+  $("#goAsk").onclick = () => { state.tab = "ask"; render(); };
+}
+
+function renderLawn() {
+  const p = state.profile;
+  $("#app").innerHTML = `<h1>My Lawn</h1>
+    <div class="card" style="margin-top:12px"><h2 style="margin-top:0">Profile</h2>
+      <div class="kv"><span class="muted">Grass type</span><b>${esc(p.grass)}</b></div>
+      <div class="kv"><span class="muted">Size</span><b>${LABEL[p.size]}</b></div>
+      <div class="kv"><span class="muted">Condition</span><b>${LABEL[p.condition]}</b></div>
+      <div class="kv"><span class="muted">Goal</span><b>${LABEL[p.goal]}</b></div>
+      <div class="kv"><span class="muted">Climate zone</span><b>${zoneLabel(p.lat)}</b></div>
+      <div class="kv"><span class="muted">ZIP</span><b>${esc(p.zip)}</b></div></div>
+    <h2>Treatment history</h2>
+    ${state.history.length === 0
+      ? '<div class="card"><p class="muted">Nothing logged yet — completed tasks land here automatically, and the agent uses them to avoid repeating recommendations.</p></div>'
+      : state.history.map(h => `<div class="card">${esc(h.title)}<div class="muted small">${new Date(h.at).toLocaleDateString("en-US", { month:"long", day:"numeric", year:"numeric" })}</div></div>`).join("")}`;
+}
+
+const PROMPTS = ["Why is my lawn slow to green up?","Should I aerate before or after rain?","What's causing brown rings?"];
+
+function renderAsk() {
+  $("#app").innerHTML = `<h1>Ask LawnMind</h1>
+    <div id="msgs" style="margin-top:12px">
+    ${state.chat.length === 0 ? '<p class="muted">Your lawn-obsessed neighbor who happens to be an agronomist. Ask anything.</p>' : ""}
+    ${state.chat.map(t => `<div class="bubble ${t.role === "user" ? "user" : "bot"}">${esc(t.content)}</div>`).join("")}
+    </div>
+    ${state.chat.length === 0 ? '<div class="chips">' + PROMPTS.map((p, i) => `<button class="chip" data-prompt="${i}">${p}</button>`).join("") + "</div>" : ""}
+    <div class="chat-input"><textarea id="draft" placeholder="Ask anything about your lawn…" maxlength="2000"></textarea>
+    <button class="send" id="send">↑</button></div>`;
+
+  function send(text) {
+    text = text.trim(); if (!text) return;
+    state.chat.push({ role: "user", content: text });
+    state.chat.push({ role: "assistant", content: chatAnswer(text, state.profile, state.plan) });
+    state.chat = state.chat.slice(-40);
+    store.set("chat", state.chat);
+    render();
+    window.scrollTo(0, document.body.scrollHeight);
+  }
+  document.querySelectorAll("[data-prompt]").forEach(b => b.onclick = () => send(PROMPTS[+b.dataset.prompt]));
+  $("#send").onclick = () => send($("#draft").value);
+  $("#draft").onkeydown = e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send($("#draft").value); } };
+}
+
+const REGROWTH = [
+  ["Spring Regrowth Plan","8 weeks from patchy to dense — pre-emergent timing, feeding, and spot seeding."],
+  ["Fall Overseeding Campaign","The highest-success seeding window of the year, sequenced week by week."],
+  ["Weed Reclamation Plan","For lawns over 50% weeds: knock down, rebuild, and defend."],
+];
+
+function renderExplore() {
+  $("#app").innerHTML = `<h1>Explore</h1>
+    <h2>Regrowth & recovery plans</h2>
+    ${REGROWTH.map(([n, b]) => `<div class="card"><b style="font-size:16px">${n}</b><p class="muted">${b}</p>
+      <p class="note">Free preview: first 2 weeks · Full plan with Pro (coming soon)</p></div>`).join("")}
+    <h2>Recommended products</h2>
+    ${CATALOG.map(p => `<a class="card" style="display:block;text-decoration:none;color:inherit" href="${p.url}" target="_blank" rel="noopener">
+      <b style="font-size:16px">${p.name}</b><div class="muted small" style="font-style:italic">via ${p.partner} · affiliate link</div></a>`).join("")}`;
+}
+
+function renderSettings() {
+  $("#app").innerHTML = `<h1>Settings</h1>
+    <div class="card" style="margin-top:12px"><h2 style="margin-top:0">AI agent</h2>
+      <p class="muted">Chat mode: Built-in demo responder</p>
+      <p class="small muted">This single-file build answers from a bundled knowledge base. The full app (repo: csmith75/lawnmind) connects to Claude server-side for live, lawn-specific responses.</p></div>
+    <div class="card"><h2 style="margin-top:0">Plan</h2>
+      <button class="btn-secondary" id="regen">Regenerate this week's plan</button></div>
+    <div class="card"><h2 style="margin-top:0">Profile</h2>
+      <p class="muted" style="margin-bottom:10px">Re-run onboarding to change your lawn profile.</p>
+      <button class="btn-secondary" id="reset">Reset profile & start over</button></div>
+    <div class="card"><h2 style="margin-top:0">About</h2>
+      <p class="muted">LawnMind v0.1 single-file demo — weekly plans, demo chat, and product picks. Live weather via Open-Meteo when online.</p></div>`;
+  $("#regen").onclick = async () => { $("#regen").textContent = "Regenerating…"; await refreshPlan(); state.tab = "home"; render(); };
+  $("#reset").onclick = () => {
+    ["profile","done","history","chat"].forEach(k => store.set(k, null));
+    state = { profile: null, plan: null, done: [], history: [], chat: [], tab: "home",
+      ob: { step: 1, zip: "", size: null, condition: null, goal: null, grass: null }, expanded: {} };
+    render();
+  };
+}
+
+// ---------- router ----------
+function render() {
+  const tabs = $("#tabs");
+  if (!state.profile) { tabs.hidden = true; renderOnboarding(); return; }
+  tabs.hidden = false;
+  tabs.querySelectorAll("button").forEach(b => b.classList.toggle("active", b.dataset.tab === state.tab));
+  ({ home: renderHome, lawn: renderLawn, ask: renderAsk, explore: renderExplore, settings: renderSettings }[state.tab])();
+}
+
+document.querySelectorAll("#tabs button").forEach(b => b.onclick = () => { state.tab = b.dataset.tab; render(); window.scrollTo(0, 0); });
+render();
+</script>
+</body>
+</html>
