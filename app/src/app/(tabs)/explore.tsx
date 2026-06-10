@@ -22,13 +22,9 @@ const REGROWTH_PLANS = [
 
 export default function ExploreScreen() {
   const [products, setProducts] = useState<CatalogProduct[]>([]);
-  const [offline, setOffline] = useState(false);
 
   useEffect(() => {
-    api
-      .listProducts()
-      .then(setProducts)
-      .catch(() => setOffline(true));
+    void api.listProducts().then(setProducts);
   }, []);
 
   return (
@@ -47,11 +43,6 @@ export default function ExploreScreen() {
       ))}
 
       <Subtitle>Recommended products</Subtitle>
-      {offline && (
-        <Card>
-          <Body muted>Product catalog unavailable offline.</Body>
-        </Card>
-      )}
       {products.map((p) => (
         <Pressable key={p.productId} onPress={() => Linking.openURL(api.affiliateUrl(p.productId))}>
           <Card>

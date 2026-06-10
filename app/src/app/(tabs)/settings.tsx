@@ -11,10 +11,11 @@ export default function SettingsScreen() {
   const [chatMode, setChatMode] = useState<string>("checking…");
 
   useEffect(() => {
-    api
-      .health()
-      .then((h) => setChatMode(h.chatMode === "claude" ? "Claude (live)" : "Offline demo mode"))
-      .catch(() => setChatMode("API unreachable"));
+    void api.health().then((h) => {
+      if (h.chatMode === "claude") setChatMode("Claude (live)");
+      else if (h.chatMode === "mock") setChatMode("Demo mode (server up, no API key)");
+      else setChatMode("Standalone demo (API server not running)");
+    });
   }, []);
 
   return (
